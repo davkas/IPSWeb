@@ -94,6 +94,7 @@ ips_zoom = 1;
 				endpoint:["Dot", { radius:5 }],
 				anchor: "Continuous",
 				paintStyle:{ width:15, height:15, fillStyle:exampleColor },
+				hoverPaintStyle:{strokeStyle:"#dbe300"},
 				isSource:true,
 				reattach:true,
 				scope:"blue",
@@ -103,8 +104,16 @@ ips_zoom = 1;
 				maxConnections:100,
 				isTarget:true,			
 				dropOptions : exampleDropOptions
-			};			
+			};
 
+			function connect_dev (src, targ) {
+				var src_ep = instance.getEndpoints(src)[0];
+				var trg_ep = instance.getEndpoints(targ)[0];
+				instance.connect({
+					source:src_ep, 
+					target:trg_ep
+				});
+			}
 
 			// setup some DynamicAnchors for use with the blue endpoints			
 			// and a function to set as the maxConnections callback.
@@ -113,15 +122,15 @@ ips_zoom = 1;
 							[0.5, 1, 0, 1], //"BottomCenter")
 							[0, 0.5, -1, 0], //"LeftMiddle")
 							[1, 0.5, 1, 0], //"RightMiddle")
-							[0.5, 0, 0,-1], //"Top")
-							[0.5, 1, 0, 1], //"Bottom")
-							[0, 0.5, -1, 0], //"Left")
-							[1, 0.5, 1, 0], //"Right")
-							// [0.5, 0.5, 0, 0], //"Center")
-							[1, 0, 0,-1], //"TopRight")
-							[1, 1, 0, 1], //"BottomRight")
-							[0, 0, 0, -1], //"TopLeft")
-							[0, 1, 0, 1] //"BottomLeft")
+							// [0.5, 0, 0,-1], //"Top")
+							// [0.5, 1, 0, 1], //"Bottom")
+							// [0, 0.5, -1, 0], //"Left")
+							// [1, 0.5, 1, 0], //"Right")
+							// // [0.5, 0.5, 0, 0], //"Center")
+							// [1, 0, 0,-1], //"TopRight")
+							// [1, 1, 0, 1], //"BottomRight")
+							// [0, 0, 0, -1], //"TopLeft")
+							// [0, 1, 0, 1] //"BottomLeft")
 						  ];
 			maxConnectionsCallback = function(info) {
 				alert("Cannot drop connection " + info.connection.id + " : maxConnections has been reached on Endpoint " + info.endpoint.id);
@@ -146,7 +155,7 @@ ips_zoom = 1;
 				jsPlumbUtil.consume(e);
 			});
 
-			// var socket = io();
+			var socket = io();
 
 			var	getProjectObject = function () {
 				var sws = {};
@@ -159,18 +168,35 @@ ips_zoom = 1;
 					var srcType = src.getAttribute("type");
 					var tgtType = tgt.getAttribute("type");
 
-					var sw = {}, dev = {};
+					var swdiv, devdiv;
 					if (srcType == 'Switch' && tgtType == 'Switch') {
+						var sw;
 						links.push([src.id, tgt.id]);
+						if (!sws[src.id]) {
+							sw = {};
+							sw.id = src.id;
+							sw['x'] = src.offsetLeft;
+							sw['y'] = src.offsetTop;
+							sw['Devices'] = [];
+							sw['type'] = 'Switch';
+							sws[src.id] = sw;
+						};
+						if (!sws[tgt.id]) {
+							sw = {};
+							sw.id = tgt.id;
+							sw['x'] = tgt.offsetLeft;
+							sw['y'] = tgt.offsetTop;
+							sw['Devices'] = [];
+							sw['type'] = 'Switch';
+							sws[tgt.id] = sw;
+						};
 						continue;
 					} else if (srcType == 'Switch') {
-						sw.id = src.id;
-						dev.id = tgt.id;
-						dev.type = tgtType;
+						swdiv = src;
+						devdiv = tgt;
 					} else if (tgtType == 'Switch') {
-						sw.id = tgt.id;
-						dev.id = src.id;
-						dev.type = srcType;
+						swdiv = tgt;
+						devdiv = src;
 					} else{
 						continue;
 					};
@@ -178,23 +204,29 @@ ips_zoom = 1;
 					//Switch id
 					//Device type id tongdao rate vlan start end
 					//Link id id
-					if (!sws[sw.id]) {
-						// sw['x'] = 0;
-						// sw['y'] = 0;
+
+					if (!sws[swdiv.id]) {
+						var sw = {};
+						sw.id = swdiv.id;
+						sw['x'] = swdiv.offsetLeft;
+						sw['y'] = swdiv.offsetTop;
+						sw['type'] = 'Switch';
 						sw['Devices'] = [];
 						sws[sw.id] = sw;
 					};
 
+					var dev = {};
+					dev.id = devdiv.id;
+					dev['tongdao'] = devdiv.getAttribute("tongdao");
+					dev['rate'] = devdiv.getAttribute("rate");
+					dev['vlan'] = devdiv.getAttribute("vlan");
+					dev['start'] = devdiv.getAttribute("start");
+					dev['end'] = devdiv.getAttribute("end");
+					dev['x'] = devdiv.offsetLeft;
+					dev['y'] = devdiv.offsetTop;
+					dev.type = devdiv.getAttribute("type");
+					
 					var dsw = sws[sw.id];
-					// // dev['type'] = '';
-					// // dev['id'] = '';
-					// dev['tongdao'] = '';
-					// dev['rate'] = '';
-					// dev['vlan'] = '';
-					// dev['start'] = '';
-					// dev['end'] = '';
-					// dev['x'] = 0;
-					// dev['y'] = 0;
 					dsw['Devices'].push(dev);
 				}
 
@@ -206,43 +238,89 @@ ips_zoom = 1;
 
 				return prj;
 			}
-			// $('form').submit(function(){
-			// 	socket.emit('chat message', $('#m').val());
-			// 	$('#m').val('');
-			// 	return false;
-			// });
-			// socket.on('chat message', function(msg){
-			// 	$('#messages').append($('<li>').text(msg));
-			// });
 
-			if(0){//项目操作按钮
+
+			if(1){//项目操作按钮
 				document.getElementById("btn_open").onclick=function() {
-					var pn = document.getElementById("plist").value;
+					var pn = document.getElementById('plist').value;
+					pn = 'pname';
 					socket.emit('open', pn);
 				};
+				socket.on('open', function(data){
+					// alert(data.name);
+					for(var p in data.switches)
+					{
+						var sw = data.switches[p];
+						// add switch
+						insert_dev(sw);
+
+						for (var i = 0; i < sw.Devices.length; i++) {
+							// add device: sw.Devices[i]
+							insert_dev(sw.Devices[i]);
+							// add connection
+							// instance.connect({ source: sw.id, target:sw.Devices[i].id }, ["Bezier", { curviness:63 } ]);
+							connect_dev(sw.id, sw.Devices[i].id);
+						};
+					}
+					for (var i = 0; i < data.links.length; i++) {
+						// add connection: data.links[i][0], data.links[i][1]
+						// instance.connect({ source: data.links[i][0], target: data.links[i][1] }, 
+						// 	["Bezier", { curviness:63 } ]);
+						connect_dev(data.links[i][0], data.links[i][1]);
+					};
+				});
 
 				document.getElementById("btn_refresh").onclick=function() {
 					socket.emit('refresh', '');
+					
 				};
+				socket.on('refresh', function(files){
+					var plist = document.getElementById('plist');
+					
+					var s = '';
+					for(var i=0; i<files.length; ++i){
+						s +='<option value="'+files[i]+'">'+files[i]+'</option>';
+					}
+					plist.innerHTML = s;
+				});
 
 				document.getElementById("btn_new").onclick=function() {
 					// no socket, just delete all panel
+					document.getElementById('drag-drop-demo').innerHTML = '';
 				};
 
 				document.getElementById("btn_save").onclick=function() {
-					socket.emit('save', '');
+					var prj = getProjectObject();
+					socket.emit('save', prj);
 				};
+				socket.on('save', function (data) {
+					if (data=='OK') {
+						alert('Save OK');
+					} else {
+						alert('Save Error');
+					}
+				});
 
 				document.getElementById("btn_saveas").onclick=function() {
 					socket.emit('save', '');
 				};
 				document.getElementById("btn_delete").onclick=function() {
-					socket.emit('delete', '');
+					var pn = 'pname';
+					socket.emit('delete', pn);
 				};
+				socket.on('delete', function(data){
+					if (data=='OK') {
+						alert('Delete OK');
+					} else {
+						alert('Delete Error');
+					}
+				});
 			}
 
+			var current_dev_div = null;
 			function UpdatePanel (dev) {
-				if (document.getElementById("dname").value != dev.getAttribute('id')) {
+				if (current_dev_div == null || current_dev_div != dev.getAttribute('id')) {
+					current_dev_div = dev;
 					document.getElementById("dname").value = dev.getAttribute('id');
 					document.getElementById("dtype").value = dev.getAttribute('type');
 					document.getElementById("drate").value = dev.getAttribute('rate');
@@ -251,12 +329,21 @@ ips_zoom = 1;
 					document.getElementById("dstart").value = dev.getAttribute('start');
 					document.getElementById("dend").value = dev.getAttribute('end');
 				};
-				
+			}
+
+			function ApplyPanel () {
+				// dev.getAttribute('id', document.getElementById("dname").value);
+				// dev.getAttribute('type', document.getElementById("dtype").value);
+				dev.setAttribute('rate', document.getElementById("drate").value);
+				dev.setAttribute('vlan', document.getElementById("dvlan").value);
+				dev.setAttribute('tongdao', document.getElementById("dnum").value);
+				dev.setAttribute('start', document.getElementById("dstart").value);
+				dev.setAttribute('end', document.getElementById("dend").value);
 			}
 
 			function add_dev (type) {
 				var id = type.toString() + cnt_dev;
-				var s = '<div class="window" id="'+id+'">'+id+'</div>';
+				// var s = '<div class="window" id="'+id+'">'+id+'</div>';
 				var div=document.createElement("div");
 				div.setAttribute("class", "window");
 				div.setAttribute("id", id); 
@@ -277,6 +364,34 @@ ips_zoom = 1;
 				}
 
 				cnt_dev++;
+			}
+
+			function insert_dev (dev) {
+				var div=document.createElement("div");
+				div.setAttribute("class", "window");
+				div.setAttribute("id", dev.id); 
+				div.setAttribute("type", dev.type); 
+				if(dev.type != 'Switch')
+				{
+					div.setAttribute('rate', dev.rate);
+					div.setAttribute('vlan', dev.vlan);
+					div.setAttribute('tongdao', dev.tongdao);
+					div.setAttribute('start', dev.start);
+					div.setAttribute('end', dev.end);
+				}
+				div.setAttribute('style', 'top:'+dev.y+'px;left:'+dev.x+'px;');
+				// div.offsetLeft = dev['x'];
+				// div.offsetTop = dev['y'];
+
+				div.innerHTML = '<img src="http://v4.vcimg.com/base/images/index/duola.png?v=bedbf22e" alt="switch">';
+				// div.innerHTML = id+'<div class="div_anchor"></div>';
+				document.getElementById("drag-drop-demo").appendChild(div);
+				instance.addEndpoint(dev.id, { anchor:anchors }, exampleEndpoint);
+				instance.draggable(dev.id);
+
+				div.onclick = function () {
+					UpdatePanel(this);
+				}
 			}
 
 			if(1){//面板操作按钮
@@ -311,8 +426,21 @@ ips_zoom = 1;
 					return false;
 				};
 				
-				document.getElementById("btn_remove").onclick=function() {};
-				document.getElementById("btn_run").onclick=function() {};
+				document.getElementById("btn_remove").onclick=function() {
+					ApplyPanel();
+				};
+
+				document.getElementById("btn_run").onclick=function() {
+					var prj = getProjectObject();
+					socket.emit('run', prj);
+				};
+				socket.on('run', function(data){
+					if (data=='OK') {
+						alert('Run OK');
+					} else {
+						alert('Run Error');
+					}
+				});
 			}
 			
 			if(1){//属性操作按钮
@@ -329,5 +457,6 @@ ips_zoom = 1;
 
 		jsPlumb.fire("jsPlumbDemoLoaded", instance);
 	});	
+	
 	
 })();
