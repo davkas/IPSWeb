@@ -1,40 +1,44 @@
 
-;(function() {
-	connections = [];
-	cnt_dev = 0;
-	ips_zoom = 1;
-	var _initialised = false,		
-		listDiv = document.getElementById("list"),
+project = {};
+devices = [];
+switches = [];
+cnt_dev = 0;
+ips_zoom = 1;
 
-		showConnectionInfo = function(s) {
-			list.innerHTML = s;
-			list.style.display = "block";
-		},	
-		hideConnectionInfo = function() {
-			list.style.display = "none";
-		},
-		// connections = [],
-		updateConnections = function(conn, remove) {
-			return;
-			if (!remove) connections.push(conn);
-			else {
-				var idx = -1;
-				for (var i = 0; i < connections.length; i++) {
-					if (connections[i] == conn) {
-						idx = i; break;
-					}
+;(function() {
+	
+	var _initialised = false,		
+	listDiv = document.getElementById("list"),
+
+	showConnectionInfo = function(s) {
+		list.innerHTML = s;
+		list.style.display = "block";
+	},	
+	hideConnectionInfo = function() {
+		list.style.display = "none";
+	},
+	connections = [],
+	updateConnections = function(conn, remove) {
+		return;
+		if (!remove) connections.push(conn);
+		else {
+			var idx = -1;
+			for (var i = 0; i < connections.length; i++) {
+				if (connections[i] == conn) {
+					idx = i; break;
 				}
-				if (idx != -1) connections.splice(idx, 1);
 			}
-			if (connections.length > 0) {
-				var s = "<span><strong>Connections</strong></span><br/><br/><table><tr><th>Scope</th><th>Source</th><th>Target</th></tr>";
-				for (var j = 0; j < connections.length; j++) {
-					s = s + "<tr><td>" + connections[j].scope + "</td>" + "<td>" + connections[j].sourceId + "</td><td>" + connections[j].targetId + "</td></tr>";
-				}
-				showConnectionInfo(s);
-			} else 
-				hideConnectionInfo();
-		};
+			if (idx != -1) connections.splice(idx, 1);
+		}
+		if (connections.length > 0) {
+			var s = "<span><strong>Connections</strong></span><br/><br/><table><tr><th>Scope</th><th>Source</th><th>Target</th></tr>";
+			for (var j = 0; j < connections.length; j++) {
+				s = s + "<tr><td>" + connections[j].scope + "</td>" + "<td>" + connections[j].sourceId + "</td><td>" + connections[j].targetId + "</td></tr>";
+			}
+			showConnectionInfo(s);
+		} else 
+			hideConnectionInfo();
+	};
 	
 	jsPlumb.ready(function() {
 
@@ -142,64 +146,180 @@
 				jsPlumbUtil.consume(e);
 			});
 
+			// var socket = io();
 
+			var	getProjectObject = function () {
+				var sws = {};
+				var links = [];
+				var conns = instance.getAllConnections();
+				for (var i = 0; i < conns.length; i++) {
+					
+					var src = document.getElementById(conns[i].source.id);
+					var tgt = document.getElementById(conns[i].target.id);
+					var srcType = src.getAttribute("type");
+					var tgtType = tgt.getAttribute("type");
 
-			if(1){//项目操作按钮
+					var sw = {}, dev = {};
+					if (srcType == 'Switch' && tgtType == 'Switch') {
+						links.push([src.id, tgt.id]);
+						continue;
+					} else if (srcType == 'Switch') {
+						sw.id = src.id;
+						dev.id = tgt.id;
+						dev.type = tgtType;
+					} else if (tgtType == 'Switch') {
+						sw.id = tgt.id;
+						dev.id = src.id;
+						dev.type = srcType;
+					} else{
+						continue;
+					};
+
+					//Switch id
+					//Device type id tongdao rate vlan start end
+					//Link id id
+					if (!sws[sw.id]) {
+						// sw['x'] = 0;
+						// sw['y'] = 0;
+						sw['Devices'] = [];
+						sws[sw.id] = sw;
+					};
+
+					var dsw = sws[sw.id];
+					// // dev['type'] = '';
+					// // dev['id'] = '';
+					// dev['tongdao'] = '';
+					// dev['rate'] = '';
+					// dev['vlan'] = '';
+					// dev['start'] = '';
+					// dev['end'] = '';
+					// dev['x'] = 0;
+					// dev['y'] = 0;
+					dsw['Devices'].push(dev);
+				}
+
+				var prj = {};
+				prj.id = 123;
+				prj.name = "pname";
+				prj.switches = sws;
+				prj.links = links;
+
+				return prj;
+			}
+			// $('form').submit(function(){
+			// 	socket.emit('chat message', $('#m').val());
+			// 	$('#m').val('');
+			// 	return false;
+			// });
+			// socket.on('chat message', function(msg){
+			// 	$('#messages').append($('<li>').text(msg));
+			// });
+
+			if(0){//项目操作按钮
 				document.getElementById("btn_open").onclick=function() {
 					var pn = document.getElementById("plist").value;
-					alert(pn);
+					socket.emit('open', pn);
 				};
 
 				document.getElementById("btn_refresh").onclick=function() {
-					alert('btn_refresh');
+					socket.emit('refresh', '');
 				};
 
 				document.getElementById("btn_new").onclick=function() {
-					alert('btn_new');
+					// no socket, just delete all panel
 				};
 
 				document.getElementById("btn_save").onclick=function() {
-					alert('btn_save');
+					socket.emit('save', '');
 				};
 
 				document.getElementById("btn_saveas").onclick=function() {
-					alert('btn_saveas');
+					socket.emit('save', '');
 				};
 				document.getElementById("btn_delete").onclick=function() {
-					alert('btn_delete');
+					socket.emit('delete', '');
 				};
+			}
+
+			function UpdatePanel (dev) {
+				if (document.getElementById("dname").value != dev.getAttribute('id')) {
+					document.getElementById("dname").value = dev.getAttribute('id');
+					document.getElementById("dtype").value = dev.getAttribute('type');
+					document.getElementById("drate").value = dev.getAttribute('rate');
+					document.getElementById("dvlan").value = dev.getAttribute('vlan');
+					document.getElementById("dnum").value = dev.getAttribute('tongdao');
+					document.getElementById("dstart").value = dev.getAttribute('start');
+					document.getElementById("dend").value = dev.getAttribute('end');
+				};
+				
+			}
+
+			function add_dev (type) {
+				var id = type.toString() + cnt_dev;
+				var s = '<div class="window" id="'+id+'">'+id+'</div>';
+				var div=document.createElement("div");
+				div.setAttribute("class", "window");
+				div.setAttribute("id", id); 
+				div.setAttribute("type", type); 
+				div.setAttribute('rate', 100);
+				div.setAttribute('vlan', 'vlan0');
+				div.setAttribute('tongdao', 12);
+				div.setAttribute('start', 1);
+				div.setAttribute('end', 10);
+				div.innerHTML = '<img src="http://v4.vcimg.com/base/images/index/duola.png?v=bedbf22e" alt="switch">';
+				// div.innerHTML = id+'<div class="div_anchor"></div>';
+				document.getElementById("drag-drop-demo").appendChild(div);
+				instance.addEndpoint(id, { anchor:anchors }, exampleEndpoint);
+				instance.draggable(id);
+
+				div.onclick = function () {
+					UpdatePanel(this);
+				}
+
+				cnt_dev++;
 			}
 
 			if(1){//面板操作按钮
 				document.getElementById("btn_add_switch").onclick=function() {
 					// this.innerHTML = 'hello'+cnt_dev;
-					var id = "dev"+cnt_dev;
-					var s = '<div class="window" id="'+id+'">'+id+'</div>';
-					var div=document.createElement("div");
-					div.setAttribute("class", "window");
-					div.setAttribute("id", id); 
-					div.innerHTML = '<img src="http://v4.vcimg.com/base/images/index/duola.png?v=bedbf22e" alt="switch">';
-					// div.innerHTML = id+'<div class="div_anchor"></div>';
-					document.getElementById("drag-drop-demo").appendChild(div);
-					instance.addEndpoint(id, { anchor:anchors }, exampleEndpoint);
-					instance.draggable(id);
-
-					cnt_dev++;
+					add_dev('Switch');
 					return false;
 				};
 				
-				document.getElementById("btn_add_mu").onclick=function() {};
-				document.getElementById("btn_add_it").onclick=function() {};
-				document.getElementById("btn_add_pc").onclick=function() {};
-				document.getElementById("btn_add_fc").onclick=function() {};
-				document.getElementById("btn_add_mn").onclick=function() {};
+				document.getElementById("btn_add_mu").onclick=function() {
+					add_dev('MU');
+					return false;
+				};
+
+				document.getElementById("btn_add_it").onclick=function() {
+					add_dev('IT');
+					return false;
+				};
+				
+				document.getElementById("btn_add_pc").onclick=function() {
+					add_dev('PC');
+					return false;
+				};
+				
+				document.getElementById("btn_add_fc").onclick=function() {
+					add_dev('FC');
+					return false;
+				};
+				
+				document.getElementById("btn_add_mn").onclick=function() {
+					add_dev('MN');
+					return false;
+				};
+				
 				document.getElementById("btn_remove").onclick=function() {};
 				document.getElementById("btn_run").onclick=function() {};
 			}
 			
 			if(1){//属性操作按钮
 				document.getElementById("btn_apply").onclick=function() {};
-				document.getElementById("btn_status").onclick=function() {};
+				document.getElementById("btn_status").onclick=function() {
+					project = getProjectObject();
+				};
 			}
 			
 
