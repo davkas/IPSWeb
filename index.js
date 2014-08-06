@@ -119,7 +119,16 @@ io.on('connection', function(socket){
 				console.log('run error:'+err);
 				socket.emit('run', 'ERROR');
 			} else {
-				exec('ls -lh /usr', function(err, stdout, stderr) {
+				var ns3dir = '/home/davidxn/ips/ns-3.20/';
+				var appdir = '/home/davidxn/ips/';
+				var datadir= appdir + dir;
+				var config = datadir + 'ns3config.txt';
+
+				var cmd = 'cd '+ns3dir+' && ';
+				cmd += './waf --cwd='+datadir+' --run "scratch/ips/ips '+config+'" && ';
+				cmd += 'cd '+appdir;
+				console.log(cmd);
+				exec(cmd, function(err, stdout, stderr) {
 					if (err) {
 						console.log('run error:'+err);
 						socket.emit('run', 'ERROR');
@@ -133,8 +142,16 @@ io.on('connection', function(socket){
 		});
 	});
 
-	socket.on('status', function(){
-		//
+	socket.on('status', function(pname, dev){
+		var file = 'data/'+pname+'/IPS_'+dev+'.txt';
+		fs.readFile(file, function(err, data){
+			if(err){
+				console.log('get status error: '+err);
+			} else {
+				//console.log(data.toString());
+				socket.emit('status', data.toString().split('\n'));
+			}
+		});
 	});
 	socket.on('disconnect', function() {
 		console.log('user left');

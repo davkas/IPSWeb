@@ -323,11 +323,11 @@ ips_zoom = 1;
 			function ApplyPanel () {
 				// dev.getAttribute('id', document.getElementById("dname").value);
 				// dev.getAttribute('type', document.getElementById("dtype").value);
-				dev.setAttribute('rate', document.getElementById("drate").value);
-				dev.setAttribute('vlan', document.getElementById("dvlan").value);
-				dev.setAttribute('tongdao', document.getElementById("dnum").value);
-				dev.setAttribute('start', document.getElementById("dstart").value);
-				dev.setAttribute('end', document.getElementById("dend").value);
+				current_dev_div.setAttribute('rate', document.getElementById("drate").value);
+				current_dev_div.setAttribute('vlan', document.getElementById("dvlan").value);
+				current_dev_div.setAttribute('tongdao', document.getElementById("dnum").value);
+				current_dev_div.setAttribute('start', document.getElementById("dstart").value);
+				current_dev_div.setAttribute('end', document.getElementById("dend").value);
 			}
 
 			function add_dev (type) {
@@ -427,7 +427,7 @@ ips_zoom = 1;
 				};
 				
 				document.getElementById("btn_remove").onclick=function() {
-					ApplyPanel();
+					//ApplyPanel();
 				};
 
 				document.getElementById("btn_run").onclick=function() {
@@ -444,12 +444,17 @@ ips_zoom = 1;
 			}
 			
 			if(1){//属性操作按钮
-				document.getElementById("btn_apply").onclick=function() {};
+				document.getElementById("btn_apply").onclick=function() {
+					ApplyPanel();
+				};
+
 				document.getElementById("btn_status").onclick=function() {
-					socket.emit('status', {pname: 'pname', devid: current_dev_div.id});
+					//socket.emit('status', {pname: 'pname', devid: current_dev_div.id});
+					socket.emit('status', 'pname', current_dev_div.id);
 				};
 				socket.on('status', function (data) {
 					// show the data
+					console.log(data);
 				});
 			}
 			
