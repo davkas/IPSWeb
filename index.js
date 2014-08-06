@@ -18,7 +18,7 @@ io.on('connection', function(socket){
 	//socket.broadcast.emit('hi');
 	socket.on('open', function(name){
 		console.log('open');
-		fs.readFile('data/'+name, 'utf-8', function(err, data){
+		fs.readFile('data/'+name+'/topology.txt', 'utf-8', function(err, data){
 			if (err) {
 				console.log('open error:'+err);
 			} else {
@@ -45,7 +45,15 @@ io.on('connection', function(socket){
 	socket.on('save', function(proj){
 		console.log(proj);
 		var str = JSON.stringify(proj);
-		fs.writeFile('data/'+proj.name, str, 'utf-8', function(err){
+		var dir = 'data/'+proj.name+'/';
+
+		try{
+			fs.mkdirSync(dir);
+		} catch(err) {
+			console.log('no need to mkdir: '+err);
+		};
+		
+		fs.writeFile( dir +'topology.txt', str, 'utf-8', function(err){
 			if (err) {
 				console.log('write error:'+err);
 				socket.emit('save', 'ERROR');
@@ -56,20 +64,57 @@ io.on('connection', function(socket){
 		});
 	});
 	socket.on('delete', function(name){
-		console.log('delete'+name);
-		fs.unlink('data/'+name, function(err){
+		console.log('delete '+name);
+		var dir = 'data/'+name+'/';
+		fs.readdir(dir, function(err, files){
 			if (err) {
-				console.log('delete error:'+err);
+				console.log('read dir error:'+err);
 				socket.emit('delete', 'ERROR');
 			} else {
+				for (var i = 0; i < files.length; i++) {
+					fs.unlinkSync(dir+files[i]);
+				};
+				fs.rmdirSync( dir);
 				socket.emit('delete', 'OK');
 			}
 		});
+		
 	});
 	socket.on('run', function(proj){
 		console.log('run:'+proj.name);
-		var str = JSON.stringify(proj);
-		fs.writeFile('data/'+proj.name, str, 'utf-8', function(err){
+		// proj:obj{
+		// 	switches:obj{
+		// 		Devices:array(obj)
+		// 	}
+		// 	links:array(string)
+		// }
+
+		//Switch id
+		//Device type id tongdao rate vlan start end
+		//Link id id
+		var str = '';//JSON.stringify(proj);
+		// for (var i = 0; i < proj.switches.length; i++) {
+		for (var swid in proj.switches) {
+			var sw = proj.switches[swid];
+			str += 'Switch\t'+sw.id+'\n';
+			for (var j = 0; j < sw.Devices.length; j++) {
+				var dev = sw.Devices[j];
+				str += 'Device\t'+dev.type+'\t'+dev.id+'\t'+dev.tongdao+'\t'
+					+dev.rate+'\t'+dev.vlan+'\t'+dev.start+'\t'+dev.end+'\n';
+			};
+		};
+		for (var i = 0; i < proj.links.length; i++) {
+			var link = proj.links[i];
+			str += 'Link\t'+link[0]+'\t'+link[1]+'\n';
+		};
+		console.log('ns3 topology: '+str);
+
+		var dir = 'data/'+proj.name+'/';
+		if (!fs.existsSync(dir)) {
+			fs.mkdirSync(dir);
+		};
+		
+		fs.writeFile(dir+'ns3config.txt', str, 'utf-8', function(err){
 			if (err) {
 				console.log('run error:'+err);
 				socket.emit('run', 'ERROR');

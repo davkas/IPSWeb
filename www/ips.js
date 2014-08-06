@@ -63,9 +63,6 @@ ips_zoom = 1;
 			});
 			
 			instance.bind("connectionMoved", function(info, originalEvent) {
-				//  only remove here, because a 'connection' event is also fired.
-				// in a future release of jsplumb this extra connection event will not
-				// be fired.
 				updateConnections(info.connection, true);
 			});
 
@@ -76,19 +73,6 @@ ips_zoom = 1;
 				activeClass:"dragActive"
 			};
 
-			//
-			// first example endpoint.  it's a 25x21 rectangle (the size is provided in the 'style' arg to the Endpoint),
-			// and it's both a source and target.  the 'scope' of this Endpoint is 'exampleConnection', meaning any connection
-			// starting from this Endpoint is of type 'exampleConnection' and can only be dropped on an Endpoint target
-			// that declares 'exampleEndpoint' as its drop scope, and also that
-			// only 'exampleConnection' types can be dropped here.
-			//
-			// the connection style for this endpoint is a Bezier curve (we didn't provide one, so we use the default), with a lineWidth of
-			// 5 pixels, and a gradient.
-			//
-			// there is a 'beforeDrop' interceptor on this endpoint which is used to allow the user to decide whether
-			// or not to allow a particular connection to be established.
-			//
 			var exampleColor = "#00f";
 			var exampleEndpoint = {
 				endpoint:["Dot", { radius:5 }],
@@ -232,7 +216,7 @@ ips_zoom = 1;
 
 				var prj = {};
 				prj.id = 123;
-				prj.name = "pname";
+				prj.name = document.getElementById('pname').value;
 				prj.switches = sws;
 				prj.links = links;
 
@@ -243,11 +227,13 @@ ips_zoom = 1;
 			if(1){//项目操作按钮
 				document.getElementById("btn_open").onclick=function() {
 					var pn = document.getElementById('plist').value;
-					pn = 'pname';
+					// pn = 'pname';
 					socket.emit('open', pn);
 				};
 				socket.on('open', function(data){
 					// alert(data.name);
+					document.getElementById('drag-drop-demo').innerHTML = '';
+					instance.detachAllConnections();
 					for(var p in data.switches)
 					{
 						var sw = data.switches[p];
@@ -268,6 +254,7 @@ ips_zoom = 1;
 						// 	["Bezier", { curviness:63 } ]);
 						connect_dev(data.links[i][0], data.links[i][1]);
 					};
+					document.getElementById('pname').value = data.name;
 				});
 
 				document.getElementById("btn_refresh").onclick=function() {
@@ -286,7 +273,8 @@ ips_zoom = 1;
 
 				document.getElementById("btn_new").onclick=function() {
 					// no socket, just delete all panel
-					document.getElementById('drag-drop-demo').innerHTML = '';
+					// document.getElementById('drag-drop-demo').innerHTML = '';
+					location.reload();
 				};
 
 				document.getElementById("btn_save").onclick=function() {
@@ -301,16 +289,17 @@ ips_zoom = 1;
 					}
 				});
 
-				document.getElementById("btn_saveas").onclick=function() {
-					socket.emit('save', '');
-				};
-				document.getElementById("btn_delete").onclick=function() {
-					var pn = 'pname';
+				// document.getElementById("btn_saveas").onclick=function() {
+				// 	socket.emit('save', '');
+				// };
+				document.getElementById("btn_delete").onclick=function() {					
+					var pn = document.getElementById('plist').value;
 					socket.emit('delete', pn);
 				};
 				socket.on('delete', function(data){
 					if (data=='OK') {
 						alert('Delete OK');
+						location.reload();
 					} else {
 						alert('Delete Error');
 					}
@@ -343,6 +332,15 @@ ips_zoom = 1;
 
 			function add_dev (type) {
 				var id = type.toString() + cnt_dev;
+				while(1){
+					var find = document.getElementById(id);
+					if (!find) {
+						break;
+					} else {
+						cnt_dev++;
+					}
+				}
+				
 				// var s = '<div class="window" id="'+id+'">'+id+'</div>';
 				var div=document.createElement("div");
 				div.setAttribute("class", "window");
@@ -392,6 +390,8 @@ ips_zoom = 1;
 				div.onclick = function () {
 					UpdatePanel(this);
 				}
+
+				cnt_dev++;
 			}
 
 			if(1){//面板操作按钮
@@ -446,10 +446,14 @@ ips_zoom = 1;
 			if(1){//属性操作按钮
 				document.getElementById("btn_apply").onclick=function() {};
 				document.getElementById("btn_status").onclick=function() {
-					project = getProjectObject();
+					socket.emit('status', {pname: 'pname', devid: current_dev_div.id});
 				};
+				socket.on('status', function (data) {
+					// show the data
+				});
 			}
 			
+			document.getElementById("btn_refresh").click();
 
 			
 
