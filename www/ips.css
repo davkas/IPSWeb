@@ -151,3 +151,26 @@ input {
     top: 20px;
     left: 20px;
 }
+
+
+.modal {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: #ddd;
+    display: none;
+    z-index: 9999;
+}
+
+.drawdiv {
+    margin: 80px auto 0;
+    width: 720px;
+    z-index: 9999;
+}
+
+#placeholder {
+    width:720px;
+    height:400px;
+}

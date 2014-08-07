@@ -346,7 +346,7 @@ ips_zoom = 1;
 				div.setAttribute("class", "window");
 				div.setAttribute("id", id); 
 				div.setAttribute("type", type); 
-				div.setAttribute('rate', 100);
+				div.setAttribute('rate', 1000);
 				div.setAttribute('vlan', 'vlan0');
 				div.setAttribute('tongdao', 12);
 				div.setAttribute('start', 1);
@@ -452,10 +452,19 @@ ips_zoom = 1;
 					//socket.emit('status', {pname: 'pname', devid: current_dev_div.id});
 					socket.emit('status', 'pname', current_dev_div.id);
 				};
+
 				socket.on('status', function (data) {
 					// show the data
-					console.log(data);
+					// console.log(data);
+
+					drawLine(current_dev_div.id, data);
+
 				});
+				
+				document.getElementById("btn_return").onclick=function() {
+					document.getElementById('modal').style.display = 'none';
+				}
+
 			}
 			
 			document.getElementById("btn_refresh").click();
@@ -469,3 +478,73 @@ ips_zoom = 1;
 	
 	
 })();
+
+function drawLine (label, data) {
+	var points = [];
+	var last;
+	for (var i = 0; i*10 < data.length; i++) {
+		var v = data[i*10];
+		if(v==0 && i!=0){
+			v = last;
+		}
+		points[i] = [i*0.05, v];
+		last = v;
+	};
+	var ds = [
+		{
+			label: label,
+			data: points
+		}
+	];
+
+
+	document.getElementById('modal').style.display = 'block';
+	$.plot("#placeholder", ds, {
+		yaxis: {
+			min: 0
+		},
+		xaxis: {
+			tickDecimals: 0
+		},
+		series: {
+	        lines: { show: true },
+	        points: { show: true }
+	    }
+	});
+}
+
+function drawLine_chartjs (label, data) {
+	var datalabels = [];
+	var dataSet = [];
+
+	var step = Math.ceil(data.length / 50);
+
+	for (var i = 0; i*step < data.length; i++) {
+		// datalabels[i] = Math.PI*i/8;
+		// dataSet[i] = Math.sin(i)+100;
+		datalabels[i] = i;
+		dataSet[i] = data[i*step];
+
+	};
+	//var randomScalingFactor = function(){ return Math.round(Math.random()*100)};
+	var lineChartData = {
+		labels : datalabels,
+		datasets : [
+			{
+				label: label,
+				fillColor : "rgba(151,187,205,0.2)",
+				strokeColor : "rgba(151,187,205,1)",
+				pointColor : "rgba(151,187,205,1)",
+				pointStrokeColor : "#fff",
+				pointHighlightFill : "#fff",
+				pointHighlightStroke : "rgba(151,187,205,1)",
+				data : dataSet
+			}
+		]
+	}
+	document.getElementById('modal').style.display = 'block';
+	var ctx = document.getElementById("canvas").getContext("2d");
+	window.myLine = new Chart(ctx).Line(lineChartData, {
+		responsive: true
+	});
+}
