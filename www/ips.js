@@ -83,8 +83,8 @@ ips_zoom = 1;
 				reattach:true,
 				scope:"blue",
 				connectorStyle : { lineWidth:3, strokeStyle:exampleColor },
-				connector: ["Bezier", { curviness:63 } ],
-				// connector: "Straight",
+				// connector: ["Bezier", { curviness:63 } ],
+				connector: "Straight",
 				maxConnections:100,
 				isTarget:true,			
 				dropOptions : exampleDropOptions
@@ -351,7 +351,7 @@ ips_zoom = 1;
 				div.setAttribute('tongdao', 12);
 				div.setAttribute('start', 1);
 				div.setAttribute('end', 10);
-				div.innerHTML = '<img src="http://v4.vcimg.com/base/images/index/duola.png?v=bedbf22e" alt="switch">';
+				div.innerHTML = '<img style="width:45px;" src="img/'+type+'.png" alt="'+type+'">';
 				// div.innerHTML = id+'<div class="div_anchor"></div>';
 				document.getElementById("drag-drop-demo").appendChild(div);
 				instance.addEndpoint(id, { anchor:anchors }, exampleEndpoint);
@@ -381,7 +381,7 @@ ips_zoom = 1;
 				// div.offsetLeft = dev['x'];
 				// div.offsetTop = dev['y'];
 
-				div.innerHTML = '<img src="http://v4.vcimg.com/base/images/index/duola.png?v=bedbf22e" alt="switch">';
+				div.innerHTML = '<img style="width:45px;" src="img/'+dev.type+'.png" alt="'+dev.type+'">';
 				// div.innerHTML = id+'<div class="div_anchor"></div>';
 				document.getElementById("drag-drop-demo").appendChild(div);
 				instance.addEndpoint(dev.id, { anchor:anchors }, exampleEndpoint);
@@ -428,6 +428,11 @@ ips_zoom = 1;
 				
 				document.getElementById("btn_remove").onclick=function() {
 					//ApplyPanel();
+					if (current_dev_div != null) {
+						instance.remove(current_dev_div.id);
+						current_dev_div.parentNode.removeChild(current_dev_div);
+						current_dev_div = null;
+					}
 				};
 
 				document.getElementById("btn_run").onclick=function() {
