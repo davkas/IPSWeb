@@ -119,7 +119,7 @@ io.on('connection', function(socket){
 				console.log('run error:'+err);
 				socket.emit('run', 'ERROR');
 			} else {
-				var ns3dir = '/home/davidxn/ips/ns-3.20/';
+				var ns3dir = '/home/davidxn/ips/ns/';
 				var appdir = '/home/davidxn/ips/';
 				var datadir= appdir + dir;
 				var config = datadir + 'ns3config.txt';
@@ -134,7 +134,16 @@ io.on('connection', function(socket){
 						socket.emit('run', 'ERROR');
 					}else {
 						console.log(stdout);
-						socket.emit('run', 'OK');
+						//socket.emit('run', 'OK');
+						var file = dir + 'IPS_REPORT.txt';
+						fs.readFile(file, function(err, data){
+							if(err){
+								console.log('get report error: '+err);
+								socket.emit('run', 'get report error:'+err);
+							} else {
+								socket.emit('run', {status:'OK',data:data.toString().split('\n')});
+							}
+						});
 					}
 				});
 			}

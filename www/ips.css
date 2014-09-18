@@ -174,3 +174,8 @@ input {
     width:720px;
     height:400px;
 }
+
+.warning_font {
+	position: relative;
+	top: -45px;
+}

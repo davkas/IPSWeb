@@ -284,6 +284,7 @@ ips_zoom = 1;
 				socket.on('save', function (data) {
 					if (data=='OK') {
 						alert('Save OK');
+						socket.emit('refresh', '');
 					} else {
 						alert('Save Error');
 					}
@@ -440,8 +441,19 @@ ips_zoom = 1;
 					socket.emit('run', prj);
 				};
 				socket.on('run', function(data){
-					if (data=='OK') {
-						alert('Run OK');
+					if (data.status=='OK') {
+						//alert(data.data);
+						for(var i=0; i<data.data.length; i++){
+							var arr = data.data[i].split("\t");
+							if(arr[1]>10){
+								//alert(arr[0]);
+								var div=document.createElement("div");
+								//div.setAttribute("style", "position:relative;"); 
+								div.setAttribute("class", "warning_font"); 
+								div.innerHTML="<font color='red'>"+arr[1]+"</font>";
+								document.getElementById(arr[0]).appendChild(div);
+							}	
+						}
 					} else {
 						alert('Run Error');
 					}
@@ -455,7 +467,8 @@ ips_zoom = 1;
 
 				document.getElementById("btn_status").onclick=function() {
 					//socket.emit('status', {pname: 'pname', devid: current_dev_div.id});
-					socket.emit('status', 'pname', current_dev_div.id);
+					var pn = document.getElementById('plist').value;
+					socket.emit('status', pn, current_dev_div.id);
 				};
 
 				socket.on('status', function (data) {
@@ -492,7 +505,7 @@ function drawLine (label, data) {
 		if(v==0 && i!=0){
 			v = last;
 		}
-		points[i] = [i*0.05, v];
+		points[i] = [i*0.5, v];
 		last = v;
 	};
 	var ds = [
