@@ -454,8 +454,9 @@ ips_zoom = 1;
 								document.getElementById(arr[0]).appendChild(div);
 							}	
 						}
+						alert('Run OK!');
 					} else {
-						alert('Run Error');
+						alert('Run Error!');
 					}
 				});
 			}
