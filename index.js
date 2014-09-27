@@ -7,7 +7,7 @@ var exec = require('child_process').exec;
 
 app.get('/', function(req, res){
 	//res.send('<h1>Hello world</h1>');
-	res.sendfile('www/ips.html');
+	res.sendfile('www/index.html');
 });
 
 app.use(express.static(__dirname + '/www'));
