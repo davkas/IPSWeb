@@ -17,7 +17,7 @@ io.on('connection', function(socket){
 
 	//socket.broadcast.emit('hi');
 	socket.on('open', function(name){
-		console.log('open');
+		console.log('open '+name);
 		fs.readFile('data/'+name+'/topology.txt', 'utf-8', function(err, data){
 			if (err) {
 				console.log('open error:'+err);
@@ -102,6 +102,7 @@ io.on('connection', function(socket){
 
 		var nodes = {};
 		var conns = [];
+		var nl = 0;
 		for (var i = 0; i < elements.length; i++) {
 			var element = elements[i];
 			if (element.elementType == 'link') {
@@ -111,9 +112,11 @@ io.on('connection', function(socket){
 				var node = {};
 				node.id = element._id;
 				node.type = element["label"];
+				console.log(node.type);
 				if (node.type == "Switch") {
 					node['Devices'] = [];
 				} else {
+					node['Devices'] = [];
 					node['tongdao'] = element["lushu"];
 					node['rate'] = element["rate"];
 					node['vlan'] = element["vlan"];
@@ -124,11 +127,12 @@ io.on('connection', function(socket){
 				}
 
 				nodes[node.id] = node;
+				nl++;
 			}
 		}
-		// console.log("nodes:"+JSON.stringify(elements));
-		// console.log("conns:"+JSON.stringify(conns));
-		console.log("nodes:"+nodes.length);
+		//console.log("nodes:"+JSON.stringify(nodes));
+		//console.log("conns:"+JSON.stringify(conns));
+		console.log("nodes:"+nl);
 		console.log("conns:"+conns.length);
 
 		var sws = {};
@@ -153,8 +157,8 @@ io.on('connection', function(socket){
 				var swc = first;
 				var dev = second;
 				if (second.type=="Switch") {
-					swc = first;
-					dev = second;
+					swc = second;
+					dev = first;
 				};
 
 				if (!sws[swc.id]) {
@@ -165,8 +169,8 @@ io.on('connection', function(socket){
 				swc.Devices.push(dev);
 			}
 		}
-		// console.log("sws:"+JSON.stringify(sws));
-		// console.log("links:"+JSON.stringify(links));
+		//console.log("sws:"+JSON.stringify(sws));
+		//console.log("links:"+JSON.stringify(links));
 
 		for (var swid in sws) {
 			var sw = sws[swid];
@@ -189,13 +193,12 @@ io.on('connection', function(socket){
 		};
 		
 		fs.writeFile(dir+'ns3config.txt', str, 'utf-8', function(err){
-			return;
 			if (err) {
 				console.log('run error:'+err);
 				socket.emit('run', 'ERROR');
 			} else {
-				var ns3dir = '/home/davidxn/ips/ns/';
-				var appdir = '/home/davidxn/ips/';
+				var ns3dir = '/home/davidxn/ns/ns-allinone-3.20/ns-3.20/';
+				var appdir = '/home/davidxn/IPSWeb/';
 				var datadir= appdir + dir;
 				var config = datadir + 'ns3config.txt';
 
