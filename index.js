@@ -25,6 +25,19 @@ io.on('connection', function(socket){
 				// socket.emit('open', data);
 				// console.log(data);
 				var json = JSON.parse(data);
+
+				try {
+				var file = 'data/' +name + '/IPS_REPORT.txt';
+				var data = fs.readFileSync(file);
+				var arr = data.toString().split('\n');
+				arr.pop();
+				json.runlog = arr;
+				} catch (err) {
+					console.log('get report error: '+err);
+					json.runlog = "none";
+				}
+
+
 				console.log(json);
 				socket.emit('open', json);
 			}
@@ -219,7 +232,10 @@ io.on('connection', function(socket){
 								console.log('get report error: '+err);
 								socket.emit('run', 'get report error:'+err);
 							} else {
-								socket.emit('run', {status:'OK',data:data.toString().split('\n')});
+								var arr = data.toString().split('\n');
+								arr.pop();
+								console.log(arr);
+								socket.emit('run', {status:'OK',data: arr});
 							}
 						});
 					}
