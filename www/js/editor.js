@@ -178,7 +178,8 @@ $(document).ready(function(){
                     continue;
                 var node= scene.getElementById(arr[0]);
                 if(arr[1]>node.alarmLimit){
-                    node.alarm="超过限定值！";
+                    //node.alarm="超过限定值！";
+                    node.alarm="请调整端口速率或重新划分VLAN！";
                     node.alarmColor = '0,255,0';
                 }   
             }
@@ -304,7 +305,7 @@ function drop(ev){
                 iY = e.clientY - this.offsetTop;*/
         var draginfo= ev.dataTransfer.getData("info");
         var info= eval("("+draginfo+")");
-        var node = newNode(clientX-300,clientY-100,info.image,info.label);
+        var node = newNode(clientX-300,clientY-100,info.image,info.title);
         node.label=info.label;
     }
     ev.stopPropagation();
